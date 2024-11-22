@@ -1,3 +1,5 @@
+#https://aac-mi-sim.onrender.com
+
 import dash
 from dash import Dash,dcc, html, Input, Output, State,no_update
 import dash_bootstrap_components as dbc
@@ -6,6 +8,7 @@ import numpy as np
 
 
 from config import box_shadow
+from config import chart_bg_space_style
 
 # Initialize Dash app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -165,13 +168,13 @@ def calculate_emi(n_clicks,vehicle_price, discount, interest_rate, loan_tenure, 
     
 
     # Display results
-    result = [
+    result =html.Div( [
         html.P(f"Transactional Price: {transactional_price:.2f}"),
         html.P(f"Total Finance Amount: {finance_amount:.2f}"),
         html.P(f"Amount to be paid to bank in {loan_tenure} years: {total_paid:.2f}"),
         html.P(f"EMI Monthly: {emi_monthly:.2f}"),
         html.P(f"Actual Price of the Car: {actual_price:.2f}")
-    ]
+    ],style=chart_bg_space_style)
 
     return result
 
