@@ -1,90 +1,151 @@
-#https://aac-mi-sim.onrender.com
-
 import dash
-from dash import Dash,dcc, html, Input, Output, State,no_update
+from dash import Dash, dcc, html, Input, Output, State, dash_table
 import dash_bootstrap_components as dbc
 import pandas as pd
 import numpy as np
 
 
-from config import box_shadow
-from config import chart_bg_space_style
-
 # Initialize Dash app
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server=app.server
+app = Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
+server = app.server
+
+# Load CSV data
+data = pd.read_csv('AAC_FI_MS CSV.csv', index_col=False)
 
 
-# Load the CSV data and dictionaries
-data = pd.read_csv('vehicle_data.csv',index_col=False)
-
-# Convert all columns in the DataFrame to numeric, with non-numeric entries set as NaN
-data = data.apply(pd.to_numeric, errors='coerce')
-
-month_dict = {'July': 1, 'August': 2, 'September': 3, 'October': 4}
-visit_dict = {'1st Visit': 1, '2nd Visit': 2}
+'''
+Reserve code for selecting multi answers in the dropdown box
+months_available = sorted(data['Month'].unique())
+visits_available = sorted(data['Visit'].unique())
+options=[{'label': month, 'value': month} for month in months_available],
+        value=months_available,  # Default to selecting all
+'''        
+# Mapping dictionaries
+month_dict = {1: 'July', 2: 'August', 3: 'September', 4: 'October'}
+visit_dict = {1: '1st Visit', 2: '2nd Visit'}
+segment_dict = {1: 'Seg D', 2: 'SUV B', 3: 'SUV C', 4: 'SUV D', 5: 'SUV F'}
 model_dict = {
-    'Land Cruiser': 1, 'Coolray': 2, 'Accord': 3, 'RAV4': 4, 'Expedition': 5,
-    'Territory': 6, 'Sonata': 7, 'Seltos': 8, 'Camry': 9, 'Tucson': 10,
-    'Rush': 11, 'Altima': 12, 'Kicks': 13, 'X-Trail': 14, 'Patrol': 15
+    1: 'Land Cruiser', 2: 'Coolray', 3: 'Accord', 4: 'RAV4', 5: 'Expedition',
+    6: 'Territory', 7: 'Sonata', 8: 'Seltos', 9: 'Camry', 10: 'Tucson',
+    11: 'Rush', 12: 'Altima', 13: 'Kicks', 14: 'X-Trail', 15: 'Patrol'
 }
-segment_dict = {'Seg D': 1, 'SUV B': 2, 'SUV C': 3, 'SUV F': 5}
+bank_dict = {
+    1: 'ADCB', 2: 'ADIB', 3: 'DIB', 4: 'EIB', 5: 'ENBD', 6: 'EID', 7: 'FAB'
+}
+insurance_dict = {
+    1: 'Adnic', 2: 'Al Ahlia', 3: 'Al Hilal', 4: 'Allaiance', 5: 'AXA',
+    6: 'DIG', 7: 'Emirates', 8: 'GAG', 9: 'GIG', 10: 'Liva',
+    11: 'Meta takaful', 12: 'Oman Insurance', 13: 'Orient Insurance',
+    14: 'Orient Takaful', 15: 'RSA', 16: 'Sukoon', 17: 'Takaful', 18: 'DIC'
+}
+loan_tenure_dict = {
+    1: '3 Years', 2: '4 Years', 3: '5 Years'
+}
 
-# Apply dictionary mappings for dropdowns
-data['Month'] = data['Month'].map({v: k for k, v in month_dict.items()})
-data['Visit'] = data['Visit'].map({v: k for k, v in visit_dict.items()})
-data['Model'] = data['Model'].map({v: k for k, v in model_dict.items()})
-data['Segment'] = data['Segment'].map({v: k for k, v in segment_dict.items()})
 
-#data.to_csv('Out.csv')
+# Map numeric values to their respective labels in the DataFrame
+data['Month'] = data['Month'].map(month_dict)
+data['Visit'] = data['Visit'].map(visit_dict)
+data['Segment'] = data['Segment'].map(segment_dict)
+data['Model'] = data['Model'].map(model_dict)
+
+data['Rec_Bank_1'] = data['Rec_Bank_1'].replace(' ', 0).astype(int)
+data['Rec_Bank_1'] = data['Rec_Bank_1'].map(bank_dict).fillna('None')
+
+data['Rec_Bank_2'] = data['Rec_Bank_2'].replace(' ', 0).astype(int)
+data['Rec_Bank_2'] = data['Rec_Bank_2'].map(bank_dict).fillna('None')
+
+data['Rec_Bank_3'] = data['Rec_Bank_3'].replace(' ', 0).astype(int)
+data['Rec_Bank_3'] = data['Rec_Bank_3'].map(bank_dict).fillna('None')
+
+data['Ins_Company_1'] = data['Ins_Company_1'].replace(' ', 0).astype(int)
+data['Ins_Company_1'] = data['Ins_Company_1'].map(insurance_dict).fillna('None')
+
+data['Ins_Company_2'] = data['Ins_Company_2'].replace(' ', 0).astype(int)
+data['Ins_Company_2'] = data['Ins_Company_2'].map(insurance_dict).fillna('None')
+
+data['Ins_Company_3'] = data['Ins_Company_3'].replace(' ', 0).astype(int)
+data['Ins_Company_3'] = data['Ins_Company_3'].map(insurance_dict).fillna('None')
+
+data['Loan_Tenure_Yrs_1'] = data['Loan_Tenure_Yrs_1'].replace(' ', 0).astype(int)
+data['Loan_Tenure_Yrs_1'] = data['Loan_Tenure_Yrs_1'].map(loan_tenure_dict).fillna('None')
+
+data['Loan_Tenure_Yrs_2'] = data['Loan_Tenure_Yrs_2'].replace(' ', 0).astype(int)
+data['Loan_Tenure_Yrs_2'] = data['Loan_Tenure_Yrs_2'].map(loan_tenure_dict).fillna('None')
+
+data['Loan_Tenure_Yrs_3'] = data['Loan_Tenure_Yrs_3'].replace(' ', 0).astype(int)
+data['Loan_Tenure_Yrs_3'] = data['Loan_Tenure_Yrs_3'].map(loan_tenure_dict).fillna('None')
+
+data['Interest_Rate_1'] = data['Interest_Rate_1'].replace(' ', np.nan).astype(float)
+data['Interest_Rate_1']=data['Interest_Rate_1']*100
+
+data['Interest_Rate_2'] = data['Interest_Rate_2'].replace(' ', np.nan).astype(float)
+data['Interest_Rate_2']=data['Interest_Rate_2']*100
+
+data['Interest_Rate_3'] = data['Interest_Rate_3'].replace(' ', np.nan).astype(float)
+data['Interest_Rate_3']=data['Interest_Rate_3']*100
+
+data['Downpayment_Perc_1'] = data['Downpayment_Perc_1'].replace(' ', np.nan).astype(float)
+data['Downpayment_Perc_1']=data['Downpayment_Perc_1']*100
+
+data['Downpayment_Perc_2'] = data['Downpayment_Perc_2'].replace(' ', np.nan).astype(float)
+data['Downpayment_Perc_2']=data['Downpayment_Perc_2']*100
+
+data['Downpayment_Perc_3'] = data['Downpayment_Perc_3'].replace(' ', np.nan).astype(float)
+data['Downpayment_Perc_3']=data['Downpayment_Perc_3']*100
+
+
+data['Processing_Fees_AED_1'] = data['Processing_Fees_AED_1'].replace(' ', np.nan).astype(float)
+data['Processing_Fees_AED_1']=data['Processing_Fees_AED_1']*100
+
+data['Processing_Fees_AED_2'] = data['Processing_Fees_AED_2'].replace(' ', np.nan).astype(float)
+data['Processing_Fees_AED_2']=data['Processing_Fees_AED_2']*100
+
+data['Processing_Fees_AED_3'] = data['Processing_Fees_AED_3'].replace(' ', np.nan).astype(float)
+data['Processing_Fees_AED_3']=data['Processing_Fees_AED_3']*100
+
+data['Insurance_Rate_Perc_1'] = data['Insurance_Rate_Perc_1'].replace(' ', np.nan).astype(float)
+data['Insurance_Rate_Perc_1']=data['Insurance_Rate_Perc_1']*100
+
+data['Insurance_Rate_Perc_2'] = data['Insurance_Rate_Perc_2'].replace(' ', np.nan).astype(float)
+data['Insurance_Rate_Perc_2']=data['Insurance_Rate_Perc_2']*100
+
+data['Insurance_Rate_Perc_3'] = data['Insurance_Rate_Perc_3'].replace(' ', np.nan).astype(float)
+data['Insurance_Rate_Perc_3']=data['Insurance_Rate_Perc_3']*100
 
 
 
+data.to_excel('output.xlsx', index=False)
 # Layout
-app.layout =  dbc.Container([
-    html.Div([
-        dbc.Row([
-            dbc.Col([html.Img(src='assets/DG_Logo.png', height="75px")], width=2),
-            dbc.Col([html.H1("")], width=2),
-            dbc.Col([html.H1("Vehicle EMI Calculator")], width=4),
-            dbc.Col([html.H1("")], width=2),
-            dbc.Col([html.H1("")], width=2),
-            #dbc.Col([html.Img(src='assets/DG_Logo.png', height="75px",style={"float": "right"})], width=2),
-        ]),
-        dbc.Row([html.Hr()]),
+app.layout = dbc.Container([
+    html.H1("AAC - TITLE", className="text-center mb-4"),
+    html.Br(),
+    dbc.Row([
+        dbc.Col([
+            html.Label("MONTH(S):"),
+            dcc.Dropdown(id='month', options=[{'label': v, 'value': v} for v in month_dict.values()], multi=True, placeholder="Select Month(s)"),
+        ],width=3),
+        dbc.Col([    
+            html.Label("VISIT(S):"),
+            dcc.Dropdown(id='visit', options=[{'label': v, 'value': v} for v in visit_dict.values()], multi=True, placeholder="Select Visit(s)"),
+        ],width=3),
+        dbc.Col([        
+            html.Label("SEGMENT:"),
+            dcc.Dropdown(id='segment', options=[{'label': v, 'value': v} for v in segment_dict.values()], placeholder="Select Segment"),
+        ],width=3),            
+        dbc.Col([        
+            html.Label("MODEL:"),
+            dcc.Dropdown(id='model', placeholder="Select Model"),
+         ],width=3),         
+            html.Hr(),
+            dbc.Button('Submit', id='submit-button', n_clicks=0),
+        
     ]),
-    html.Div([
-        dbc.Row([
-            dbc.Col([    
-                html.Div([
-                html.Label("MONTH(S):"),
-                dbc.Row([dcc.Dropdown(id='month', options=[{'label': k, 'value': k} for k in month_dict.keys()], multi=True, placeholder="Select Month(s)"),]),
-                html.Label("VISIT(S):"),
-                dbc.Row([dcc.Dropdown(id='visit', options=[{'label': k, 'value': k} for k in visit_dict.keys()], multi=True, placeholder="Select Visit(s)"),]),
-                html.Label("SEGMENT:"),
-                dbc.Row([dcc.Dropdown(id='segment', options=[{'label': k, 'value': k} for k in segment_dict.keys()], placeholder="Select Segment"),]),
-                html.Label("MODEL:"),                
-                dbc.Row([dcc.Dropdown(id='model', placeholder="Select Model"),]),
-                html.Label("LOAN TENURE:"),                
-                dbc.Row([dcc.Dropdown(id='loan_tenure', options=[{'label': '3 Years', 'value': 3}, {'label': '5 Years', 'value': 5}], placeholder="Loan Tenure (Years)"),]),
-                html.Label("DOWN PAYMENT:"),                
-                dbc.Row([dcc.Dropdown(id='downpayment', options=[{'label': '0%', 'value': 0}, {'label': '10%', 'value': 0.1}, {'label': '20%', 'value': 0.2}],  placeholder="Downpayment %"),]),
-                dbc.Row([html.Label("Vehicle Price:"),dcc.Input(id='vehicle_price', type='number', placeholder="Vehicle Retail Price"),]),
-                dbc.Row([html.Label("Int Rate:"),dcc.Input(id='interest_rate', type='number', placeholder="Interest Rate (%)"),]),
-                dbc.Row([html.Label("Discount Amount:"),dcc.Input(id='discount', type='number', placeholder="Discount"),]),
-                dbc.Row([html.Label("Processing Fees:"),dcc.Input(id='processing_fee', type='number', placeholder="Processing Fees"),]),
-                html.Hr(),
-                dbc.Row([dbc.Button('Submit', id='submit-button', n_clicks=0,),], justify="center"),
-                ], style=box_shadow),
-            ],width=6),
-            dbc.Col([    
-                html.Div(id='output')    
-            ]),    
-        ]),  
-    ]),
-     
-   
-],fluid=True)
+    html.Br(),
+    dbc.Row([html.H4("Bank Details", className="text-center mb-4"), dash_table.DataTable(id='bank-data-table', style_table={'overflowX': 'auto'}, style_cell={'textAlign': 'center'})]),
+    html.Br(),
+    dbc.Row([html.H4("Insurance Details", className="text-center mb-4"), dash_table.DataTable(id='insurance-data-table', style_table={'overflowX': 'auto'}, style_cell={'textAlign': 'center'})])
+])
 
 # Callback to update Model dropdown based on Segment selection
 @app.callback(
@@ -92,91 +153,85 @@ app.layout =  dbc.Container([
     Input('segment', 'value')
 )
 def update_model_dropdown(segment_val):
-    if segment_val == 'Seg D':
-        model_options = [{'label': 'Altima', 'value': 'Altima'},{'label': 'Accord', 'value': 'Accord'},{'label': 'Sonata', 'value': 'Sonata'},{'label': 'Camry', 'value': 'Camry'},]
-    elif segment_val == 'SUV B':
-        model_options = [{'label': 'Kicks', 'value': 'Kicks'},{'label': 'Coolray', 'value': 'Coolray'},{'label': 'Seltos', 'value': 'Seltos'},{'label': 'Rush', 'value': 'Rush'},]
-    elif segment_val == 'SUV C':
-        model_options = [{'label': 'X-Trail', 'value': 'X-Trail'},{'label': 'RAV4', 'value': 'RAV4'},{'label': 'Territory', 'value': 'Territory'},{'label': 'Tucson', 'value': 'Tucson'},]
-    elif segment_val == 'SUV F':
-        model_options = [{'label': 'Patrol', 'value': 'Patrol'},{'label': 'Land Cruiser', 'value': 'Land Cruiser'},{'label': 'Expedition', 'value': 'Expedition'},]
-    else:
-        model_options = []
-        
-    return model_options
+    if not segment_val:
+        return []
+    available_models = data[data['Segment'] == segment_val]['Model'].unique()
+    return [{'label': model, 'value': model} for model in available_models]
 
-# Callback to update vehicle-related values based on model, month, and visit
+# Callback to fetch and display data in DataTables based on selected inputs
 @app.callback(
-    Output('vehicle_price', 'value'),
-    Output('interest_rate', 'value'),
-    Input('model', 'value'),
-    Input('month', 'value'),
-    Input('visit', 'value')
-)
-def update_values_from_model(selected_model, months, visits):
-    if selected_model and months and visits:
-        filtered_data = data[(data['Model'] == selected_model) & 
-                             (data['Month'].isin(months)) & 
-                             (data['Visit'].isin(visits))]
-        avg_price = filtered_data['Dealer_Price'].mean() if not filtered_data.empty else 0
-        avg_interest = filtered_data['Interest_Rate'].mean() if not filtered_data.empty else 0
-        #print(avg_price)
-        #print(avg_interest)
-    else:
-        avg_price, avg_interest = 0, 0
-
-    return avg_price, avg_interest
-
-# Callback to calculate EMI and display output
-@app.callback(
-    Output('output', 'children'),    
+    [Output('bank-data-table', 'data'),
+     Output('bank-data-table', 'columns'),
+     Output('insurance-data-table', 'data'),
+     Output('insurance-data-table', 'columns')],
     Input('submit-button', 'n_clicks'),
-    State('vehicle_price', 'value'),
-    State('discount', 'value'),
-    State('interest_rate', 'value'),
-    State('loan_tenure', 'value'),
-    State('downpayment', 'value'),
-    State('processing_fee', 'value')
+    State('month', 'value'),
+    State('visit', 'value'),
+    State('segment', 'value'),
+    State('model', 'value')
 )
-def calculate_emi(n_clicks,vehicle_price, discount, interest_rate, loan_tenure, downpayment, processing_fee):
+def update_tables(n_clicks, months, visits, segment, model):
+    if n_clicks == 0 or not (months and visits and segment and model):
+        return [], [], [], []
 
-    if n_clicks == 0:
-        return no_update
-    
-    if vehicle_price is None or discount is None or interest_rate is None or loan_tenure is None or downpayment is None or processing_fee is None : 
-        return [html.P("All Values requried to calculate EMI"),]
-    
-    # Ensure defaults if any input is None
-    discount = discount or 0
-    vehicle_price = vehicle_price or 0
-    interest_rate = interest_rate or 0
-    downpayment = downpayment or 0
-    processing_fee = processing_fee or 0
+    # Filter data based on the selected inputs
+    filtered_data = data[
+        (data['Month'].isin(months)) &
+        (data['Visit'].isin(visits)) &
+        (data['Segment'] == segment) &
+        (data['Model'] == model)
+        
+    ]
 
-    # Transactional Price Calculation
-    transactional_price = vehicle_price - discount
-    downpayment_amount = transactional_price * downpayment
-    finance_amount = transactional_price - downpayment_amount + processing_fee
-
-    # EMI Calculation
-    monthly_rate = interest_rate / 100 / 12
-    num_payments = loan_tenure * 12
-    emi_monthly = finance_amount * (monthly_rate * (1 + monthly_rate) ** num_payments) / ((1 + monthly_rate) ** num_payments - 1)
-    total_paid = emi_monthly * num_payments
-    actual_price = total_paid
-
+    if filtered_data.empty:
+        return [], [], [], []
     
 
-    # Display results
-    result =html.Div( [
-        html.P(f"Transactional Price: {transactional_price:.2f}"),
-        html.P(f"Total Finance Amount: {finance_amount:.2f}"),
-        html.P(f"Amount to be paid to bank in {loan_tenure} years: {total_paid:.2f}"),
-        html.P(f"EMI Monthly: {emi_monthly:.2f}"),
-        html.P(f"Actual Price of the Car: {actual_price:.2f}")
-    ],style=chart_bg_space_style)
 
-    return result
+    # Bank details in stacked format
+    bank_table_data = []
+    for _, row in filtered_data.iterrows():
+        if row['Rec_Bank_1'] != 'None':
+            bank_table_data.append({'Visit': row['Visit'], 'Month': row['Month'], 'Model': row['Model'], 'Dealer Price': row['Dealer_Price'], 'Bank Name': row['Rec_Bank_1'], 'Interest Rate (%)': f"{row['Interest_Rate_1']:.2f}%", 'Loan Tenure (Years)': row['Loan_Tenure_Yrs_1'], 'Downpayment (%)': f"{row['Downpayment_Perc_1']:.2f}%", 'Processing Fees (%)': f"{row['Processing_Fees_AED_1']:.2f}%"})
+        if row['Rec_Bank_2'] != 'None':
+            bank_table_data.append({'Visit': row['Visit'], 'Month': row['Month'], 'Model': row['Model'], 'Dealer Price': row['Dealer_Price'], 'Bank Name': row['Rec_Bank_2'], 'Interest Rate (%)': f"{row['Interest_Rate_2']:.2f}%", 'Loan Tenure (Years)': row['Loan_Tenure_Yrs_2'], 'Downpayment (%)': f"{row['Downpayment_Perc_2']:.2f}%", 'Processing Fees (%)': f"{row['Processing_Fees_AED_2']:.2f}%"})
+        if row['Rec_Bank_3'] != 'None':
+            bank_table_data.append({'Visit': row['Visit'], 'Month': row['Month'], 'Model': row['Model'], 'Dealer Price': row['Dealer_Price'], 'Bank Name': row['Rec_Bank_3'], 'Interest Rate (%)': f"{row['Interest_Rate_3']:.2f}%", 'Loan Tenure (Years)': row['Loan_Tenure_Yrs_3'], 'Downpayment (%)': f"{row['Downpayment_Perc_3']:.2f}%", 'Processing Fees (%)': f"{row['Processing_Fees_AED_3']:.2f}%"})
+
+    bank_columns = [
+        {'name': 'Visit', 'id': 'Visit'},
+        {'name': 'Month', 'id': 'Month'},
+        {'name': 'Model', 'id': 'Model'},
+        {'name': 'Dealer Price', 'id': 'Dealer Price'},
+        {'name': 'Bank Name', 'id': 'Bank Name'},
+        {'name': 'Interest Rate (%)', 'id': 'Interest Rate (%)'},
+        {'name': 'Loan Tenure (Years)', 'id': 'Loan Tenure (Years)'},
+        {'name': 'Downpayment (%)', 'id': 'Downpayment (%)'},
+        {'name': 'Processing Fees %', 'id': 'Processing Fees (%)'}
+    ]
+
+    # Insurance details in stacked format
+    # Insurance details in stacked format
+    insurance_table_data = []
+    for _, row in filtered_data.iterrows():
+        if row['Ins_Company_1'] != 'None':
+            insurance_table_data.append({'Visit': row['Visit'], 'Month': row['Month'], 'Model': row['Model'], 'Insurance Company': row['Ins_Company_1'], 'Insurance Rate (%)': f"{row['Insurance_Rate_Perc_1']:.2f}%"})
+        if row['Ins_Company_2'] != 'None':
+            insurance_table_data.append({'Visit': row['Visit'], 'Month': row['Month'], 'Model': row['Model'], 'Insurance Company': row['Ins_Company_2'], 'Insurance Rate (%)': f"{row['Insurance_Rate_Perc_2']:.2f}%"})
+        if row['Ins_Company_3'] != 'None':
+            insurance_table_data.append({'Visit': row['Visit'], 'Month': row['Month'], 'Model': row['Model'], 'Insurance Company': row['Ins_Company_3'], 'Insurance Rate (%)': f"{row['Insurance_Rate_Perc_3']:.2f}%"})
+
+
+    insurance_columns = [
+        {'name': 'Visit', 'id': 'Visit'},
+        {'name': 'Month', 'id': 'Month'},
+        {'name': 'Model', 'id': 'Model'},
+        {'name': 'Insurance Company', 'id': 'Insurance Company'},
+        {'name': 'Insurance Rate (%)', 'id': 'Insurance Rate (%)'}
+    ]
+
+    return bank_table_data, bank_columns, insurance_table_data, insurance_columns
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
