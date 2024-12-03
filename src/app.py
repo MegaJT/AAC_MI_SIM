@@ -1,3 +1,4 @@
+#https://aac-mi-sim.onrender.com 
 import dash
 from dash import Dash, dcc, html, Input, Output, State, dash_table
 import dash_bootstrap_components as dbc
@@ -118,7 +119,14 @@ data['Insurance_Rate_Perc_3']=data['Insurance_Rate_Perc_3']*100
 data.to_excel('output.xlsx', index=False)
 # Layout
 app.layout = dbc.Container([
-    html.H1("AAC - TITLE", className="text-center mb-4"),
+    dbc.Row([
+        dbc.Col([html.Img(src='assets/DG_Logo.png', height="100px")],width=3),
+        dbc.Col([
+            html.H1("F&I MS Study 2024", className="text-center mb-4"),
+        ],width=6),    
+        dbc.Col([""],width=3),
+    dbc.Row([html.Hr()]),    
+    ]),
     html.Br(),
     dbc.Row([
         dbc.Col([
