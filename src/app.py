@@ -20,7 +20,7 @@ data = pd.read_csv('AAC_FI_MS CSV.csv', index_col=False)
 
 
 # Mapping dictionaries
-month_dict = {1: 'July', 2: 'August', 3: 'September', 4: 'October'}
+month_dict = {1: 'July', 2: 'August', 3: 'September', 4: 'October', 5: 'November', 6: 'December'}
 visit_dict = {1: '1st Visit', 2: '2nd Visit'}
 segment_dict = {1: 'Car D', 2: 'SUV B', 3: 'SUV C', 4: 'SUV D', 5: 'SUV F'}
 model_dict = {
